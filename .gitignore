@@ -1,0 +1,25 @@
+# Data files
+data/raw/
+data/*.csv
+
+# Environment
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# dbt
+retaillens_dbt/target/
+retaillens_dbt/dbt_packages/
+retaillens_dbt/logs/
+
+# Airflow
+logs/
+airflow.db
+
+# Mac
+.DS_Store
