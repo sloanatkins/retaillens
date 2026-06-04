@@ -23,3 +23,4 @@ airflow.db
 
 # Mac
 .DS_Store
+AWSCLIV2.pkg
