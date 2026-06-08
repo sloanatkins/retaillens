@@ -1,0 +1,28 @@
+name: 'retaillens_dbt'
+version: '1.0.0'
+config-version: 2
+
+profile: 'retaillens_dbt'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+analysis-paths: ["analyses"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  retaillens_dbt:
+    staging:
+      +schema: STAGING
+      +materialized: view
+    intermediate:
+      +schema: INTERMEDIATE
+      +materialized: view
+    mart:
+      +schema: MART
+      +materialized: table
