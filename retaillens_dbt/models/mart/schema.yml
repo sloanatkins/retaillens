@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: dim_customers
+    columns:
+      - name: customer_sk
+        tests: [not_null, unique]
+      - name: customer_id
+        tests: [not_null, unique]
+
+  - name: dim_products
+    columns:
+      - name: product_sk
+        tests: [not_null, unique]
+      - name: product_id
+        tests: [not_null, unique]
+
+  - name: dim_sellers
+    columns:
+      - name: seller_sk
+        tests: [not_null, unique]
+      - name: seller_id
+        tests: [not_null, unique]
+
+  - name: dim_dates
+    columns:
+      - name: date_sk
+        tests: [not_null, unique]
+      - name: full_date
+        tests: [not_null, unique]
+
+  - name: fct_order_items
+    columns:
+      - name: order_item_sk
+        tests: [not_null, unique]
+      - name: order_id
+        tests: [not_null]
+      - name: customer_sk
+        tests: [not_null]
+      - name: product_sk
+        tests: [not_null]
+      - name: seller_sk
+        tests: [not_null]
+      - name: date_sk
+        tests: [not_null]
+      - name: price
+        tests: [not_null]
