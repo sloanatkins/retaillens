@@ -1,24 +1,12 @@
-# Ingestion
-kaggle==1.8.3
-boto3==1.34.0
-pandas==2.2.0
-great-expectations==0.18.0
-
-# Airflow (managed via astro-cli, listed for reference)
-apache-airflow==2.8.0
-
-# Snowflake
-snowflake-connector-python==3.7.0
-snowflake-sqlalchemy==1.5.1
-
-# dbt
-dbt-core==1.7.0
-dbt-snowflake==1.7.0
-
-# Dashboard
-streamlit==1.31.0
-plotly==5.18.0
-
-# Utilities
-python-dotenv==1.0.0
-loguru==0.7.2
+kaggle
+boto3
+pandas
+python-dotenv
+loguru
+snowflake-connector-python
+snowflake-sqlalchemy
+dbt-core
+dbt-snowflake
+streamlit
+plotly
+cryptography
