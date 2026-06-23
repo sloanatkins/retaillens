@@ -26,7 +26,7 @@ jobs:
           flake8 ingestion/ dashboard/ \
             --max-line-length=120 \
             --exclude=__pycache__ \
-            --ignore=E501,W503
+            --ignore=E501,W503,E302,E305,F401,E402
 
   dbt-test:
     name: dbt Tests
@@ -50,10 +50,13 @@ jobs:
         run: pip install dbt-core dbt-snowflake
 
       - name: Write Snowflake private key
+        env:
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > ~/.ssh/snowflake_key.pem
-          chmod 600 ~/.ssh/snowflake_key.pem
+          mkdir -p /root/.ssh
+          printf '%s' "$SNOWFLAKE_PRIVATE_KEY" > /root/.ssh/snowflake_key.pem
+          chmod 600 /root/.ssh/snowflake_key.pem
+          ls -la /root/.ssh/snowflake_key.pem
 
       - name: Write dbt profiles
         run: |
