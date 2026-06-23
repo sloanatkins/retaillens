@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - ~/.ssh/snowflake_key.pem:/root/.ssh/snowflake_key.pem:ro
+    restart: unless-stopped
+
+  airflow:
+    image: quay.io/astronomer/astro-runtime:3.2-5
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+      - ./ingestion:/usr/local/airflow/ingestion
+      - ./retaillens_dbt:/usr/local/airflow/retaillens_dbt
+      - ~/.ssh/snowflake_key.pem:/root/.ssh/snowflake_key.pem:ro
+    restart: unless-stopped
