@@ -53,15 +53,14 @@ jobs:
         env:
           SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
         run: |
-          mkdir -p /root/.ssh
-          printf '%s' "$SNOWFLAKE_PRIVATE_KEY" > /root/.ssh/snowflake_key.pem
-          chmod 600 /root/.ssh/snowflake_key.pem
-          ls -la /root/.ssh/snowflake_key.pem
+          mkdir -p $HOME/.ssh
+          printf '%s' "$SNOWFLAKE_PRIVATE_KEY" > $HOME/.ssh/snowflake_key.pem
+          chmod 600 $HOME/.ssh/snowflake_key.pem
 
       - name: Write dbt profiles
         run: |
-          mkdir -p ~/.dbt
-          cat > ~/.dbt/profiles.yml << PROFILE
+          mkdir -p $HOME/.dbt
+          cat > $HOME/.dbt/profiles.yml << PROFILE
           retaillens_dbt:
             target: dev
             outputs:
@@ -69,7 +68,7 @@ jobs:
                 type: snowflake
                 account: ${{ secrets.SNOWFLAKE_ACCOUNT }}
                 user: ${{ secrets.SNOWFLAKE_USER }}
-                private_key_path: /root/.ssh/snowflake_key.pem
+                private_key_path: $HOME/.ssh/snowflake_key.pem
                 role: ${{ secrets.SNOWFLAKE_ROLE }}
                 database: ${{ secrets.SNOWFLAKE_DATABASE }}
                 warehouse: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
