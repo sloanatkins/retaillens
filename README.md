@@ -86,8 +86,9 @@ The validation task runs 30 pre-load checks across all 9 source tables before an
 
 ---
 
-## Project Structureretaillens/
+## Project Structure
 
+```
 retaillens/
 ├── ingestion/
 │   ├── download.py          # Kaggle download with checksum verification
@@ -111,27 +112,6 @@ retaillens/
 ├── Dockerfile
 ├── docker-compose.yml
 └── requirements.txt
-
-## Running Locally
-
-Prerequisites: Python 3.11+, Docker Desktop, astro-cli, Snowflake account, AWS account
-
-```bash
-git clone https://github.com/sloanatkins/retaillens
-cd retaillens
-cp .env.example .env
-python ingestion/download.py
-python ingestion/upload_s3.py
-python ingestion/validate.py
-python ingestion/load_snowflake.py
-cd retaillens_dbt && dbt run && dbt test
-cd .. && streamlit run dashboard/app.py
-```
-
-Or run everything with Docker:
-
-```bash
-docker-compose up
 ```
 
 ---
