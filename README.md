@@ -10,7 +10,7 @@
 
 RetailLens is an end-to-end ELT analytics pipeline built on the Olist Brazilian E-Commerce dataset — 100,000+ real orders across 9 relational tables. Raw data flows from Kaggle through AWS S3, into Snowflake, and is transformed by dbt into a star schema that powers a Streamlit dashboard answering real business questions.
 
-This is Project 3 of a 4-project data engineering portfolio. The focus here is analytics engineering depth: dimensional modeling, dbt model layers, and SQL that answers questions a business would actually care about.
+The focus here is analytics engineering depth: dimensional modeling, dbt model layers, and SQL that answers questions a business would actually care about.
 
 ---
 
