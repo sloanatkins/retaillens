@@ -16,21 +16,32 @@ This is Project 3 of a 4-project data engineering portfolio. The focus here is a
 
 ## Dashboard
 
+## Dashboard
+
 Three interactive views built with Streamlit + Plotly, querying dbt mart tables directly via Snowflake connector.
+
+---
 
 **Category Performance** — Revenue by category with cancellation rate overlay. Sidebar filter for minimum order volume.
 
 ![Category Performance](assets/category_performance1.png)
+
 ![Revenue vs Cancellation Rate](assets/category_performance2.png)
+
+---
 
 **Seller Scorecard** — Scatter plot of review score vs delivery delta, sized by order volume. Filter by state and minimum orders.
 
 ![Seller Scorecard](assets/seller_scorecard1.png)
+
 ![Top Sellers by Revenue](assets/seller_scorecard2.png)
+
+---
 
 **Customer Cohorts** — Cohort size over time, repeat purchase rate trend, and average LTV by acquisition month.
 
 ![Customer Cohorts](assets/customer_cohorts1.png)
+
 ![Lifetime Value by Cohort](assets/customer_cohorts2.png)
 
 ---
