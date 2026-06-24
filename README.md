@@ -10,7 +10,28 @@
 
 RetailLens is an end-to-end ELT analytics pipeline built on the Olist Brazilian E-Commerce dataset — 100,000+ real orders across 9 relational tables. Raw data flows from Kaggle through AWS S3, into Snowflake, and is transformed by dbt into a star schema that powers a Streamlit dashboard answering real business questions.
 
-The focus here is analytics engineering depth: dimensional modeling, dbt model layers, and SQL that answers questions a business would actually care about.
+This is Project 3 of a 4-project data engineering portfolio. The focus here is analytics engineering depth: dimensional modeling, dbt model layers, and SQL that answers questions a business would actually care about.
+
+---
+
+## Dashboard
+
+Three interactive views built with Streamlit + Plotly, querying dbt mart tables directly via Snowflake connector.
+
+**Category Performance** — Revenue by category with cancellation rate overlay. Sidebar filter for minimum order volume.
+
+![Category Performance](assets/category_performance1.png)
+![Revenue vs Cancellation Rate](assets/category_performance2.png)
+
+**Seller Scorecard** — Scatter plot of review score vs delivery delta, sized by order volume. Filter by state and minimum orders.
+
+![Seller Scorecard](assets/seller_scorecard1.png)
+![Top Sellers by Revenue](assets/seller_scorecard2.png)
+
+**Customer Cohorts** — Cohort size over time, repeat purchase rate trend, and average LTV by acquisition month.
+
+![Customer Cohorts](assets/customer_cohorts1.png)
+![Lifetime Value by Cohort](assets/customer_cohorts2.png)
 
 ---
 
@@ -88,7 +109,6 @@ The validation task runs 30 pre-load checks across all 9 source tables before an
 
 ## Project Structure
 
-```
 retaillens/
 ├── ingestion/
 │   ├── download.py          # Kaggle download with checksum verification
@@ -112,6 +132,29 @@ retaillens/
 ├── Dockerfile
 ├── docker-compose.yml
 └── requirements.txt
+
+---
+
+## Running Locally
+
+Prerequisites: Python 3.11+, Docker Desktop, astro-cli, Snowflake account, AWS account
+
+```bash
+git clone https://github.com/sloanatkins/retaillens
+cd retaillens
+cp .env.example .env
+python ingestion/download.py
+python ingestion/upload_s3.py
+python ingestion/validate.py
+python ingestion/load_snowflake.py
+cd retaillens_dbt && dbt run && dbt test
+cd .. && streamlit run dashboard/app.py
+```
+
+Or run everything with Docker:
+
+```bash
+docker-compose up
 ```
 
 ---
