@@ -130,6 +130,8 @@ retaillens/
 
 Prerequisites: Python 3.11+, Docker Desktop, astro-cli, Snowflake account, AWS account
 
+**Note:** The Snowflake free trial used for this project has ended. The full pipeline code is functional — to run it yourself you'll need a Snowflake account. The dashboard, dbt models, and ingestion scripts are all production-ready.
+
 ```bash
 git clone https://github.com/sloanatkins/retaillens
 cd retaillens
