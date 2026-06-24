@@ -1,15 +1,1 @@
-FROM python:3.11-slim
-
-WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY dashboard/ ./dashboard/
-COPY ingestion/ ./ingestion/
-COPY retaillens_dbt/ ./retaillens_dbt/
-COPY .env .env
-
-EXPOSE 8501
-
-CMD ["streamlit", "run", "dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+FROM quay.io/astronomer/astro-runtime:3.2-5
