@@ -14,33 +14,24 @@ This is Project 3 of a 4-project data engineering portfolio. The focus here is a
 
 ---
 
-## Dashboard
-
-Three interactive views built with Streamlit + Plotly, querying dbt mart tables directly via Snowflake connector.
-
----
-
 ### Category Performance
 Revenue by category with cancellation rate overlay. Sidebar filter for minimum order volume.
 
-![Category Performance](assets/category_performance1.png)
-![Revenue vs Cancellation Rate](assets/category_performance2.png)
+![Category Performance](assets/category_performance.png)
 
 ---
 
 ### Seller Scorecard
 Scatter plot of review score vs delivery delta, sized by order volume. Filter by state and minimum orders.
 
-![Seller Scorecard](assets/seller_scorecard1.png)
-![Top Sellers by Revenue](assets/seller_scorecard2.png)
+![Seller Scorecard](assets/seller_scorecard.png)
 
 ---
 
 ### Customer Cohorts
 Cohort size over time, repeat purchase rate trend, and average LTV by acquisition month.
 
-![Customer Cohorts](assets/customer_cohorts1.png)
-![Lifetime Value by Cohort](assets/customer_cohorts2.png)
+![Customer Cohorts](assets/customer_cohorts.png)
 
 ---
 
@@ -100,9 +91,17 @@ Star schema centered on order line items. Grain: one row per order item.
 
 Three interactive views built with Streamlit + Plotly, querying dbt mart tables directly via Snowflake connector.
 
-- **Category Performance** — Revenue by category with cancellation rate overlay. Sidebar filter for minimum order volume.
-- **Seller Scorecard** — Scatter plot of review score vs delivery delta, sized by order volume. Filter by state and minimum orders.
-- **Customer Cohorts** — Cohort size over time, repeat purchase rate trend, and average LTV by acquisition month.
+**Category Performance** — Revenue by category with cancellation rate overlay. Sidebar filter for minimum order volume.
+
+![Category Performance](assets/category_performance1.png)
+
+**Seller Scorecard** — Scatter plot of review score vs delivery delta, sized by order volume. Filter by state and minimum orders.
+
+![Seller Scorecard](assets/seller_scorecard1.png)
+
+**Customer Cohorts** — Cohort size over time, repeat purchase rate trend, and average LTV by acquisition month.
+
+![Customer Cohorts](assets/customer_cohorts1.png)
 
 ---
 
@@ -113,6 +112,8 @@ The Airflow DAG runs daily at 06:00 UTC with 8 sequential tasks and retries=2 on
 download_raw → upload_to_s3 → validate_data → load_to_snowflake → dbt_staging → dbt_intermediate → dbt_mart → dbt_test
 
 The validation task runs 30 pre-load checks across all 9 source tables before anything touches Snowflake.
+
+![Airflow DAG](assets/airflow_dag.png)
 
 ---
 
