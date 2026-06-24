@@ -88,49 +88,29 @@ The validation task runs 30 pre-load checks across all 9 source tables before an
 
 ## Project Structureretaillens/
 
+retaillens/
 ├── ingestion/
-
 │   ├── download.py          # Kaggle download with checksum verification
-
 │   ├── upload_s3.py         # S3 upload with date partitioning
-
 │   ├── validate.py          # 30 pre-load validation checks
-
 │   └── load_snowflake.py    # COPY INTO all 9 RAW tables
-
 ├── retaillens_dbt/
-
 │   └── models/
-
 │       ├── staging/         # 8 stg_ models
-
 │       ├── intermediate/    # 3 int_ models
-
 │       └── mart/            # 5 fct_/dim_ models
-
 ├── dashboard/
-
 │   ├── app.py               # Streamlit entry point
-
 │   ├── connection.py        # Snowflake connector
-
 │   └── views/               # One file per dashboard view
-
 ├── dags/
-
 │   └── retaillens_dag.py    # Airflow DAG
-
 ├── docs/
-
 │   ├── RetailLens_Proposal_v1.docx
-
 │   └── RetailLens_ADD_v1.docx
-
 ├── Dockerfile
-
 ├── docker-compose.yml
-
-└── requirements.txt---
+└── requirements.txt
 
 ## Running Locally
 
