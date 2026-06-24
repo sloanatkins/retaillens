@@ -164,5 +164,5 @@ docker-compose up
 
 ---
 
-*Sloan M. Atkins · University of Miami · CS + Mathematics, Class of 2027*
-*Data Engineering Portfolio · Project 3 of 4*
+<i>Sloan M. Atkins · University of Miami · CS + Mathematics, Class of 2027</i><br>
+<i>Data Engineering Portfolio · Project 3 of 4</i>
