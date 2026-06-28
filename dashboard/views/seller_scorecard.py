@@ -1,9 +1,34 @@
-import streamlit as st
-import plotly.express as px
-import sys
+"""
+Seller Scorecard View
+=====================
+
+Helps spot outlier sellers — ones with unusually high or low review
+scores, slow delivery, or big order volumes.
+
+Two charts:
+- Scatter: review score vs delivery delta, sized by order volume
+  (negative delta means the package arrived early)
+- Bar: top 20 sellers by revenue, colored by avg review score
+
+Reads from DIM_SELLERS, which is built in int_seller_metrics and
+promoted to the mart. Only sellers with at least 10 orders are included
+so one-off sellers don't skew the scatter.
+
+Dependencies:
+- streamlit
+- plotly
+- connection.run_query (../connection.py)
+"""
+
 import os
+import sys
+
+import plotly.express as px
+import streamlit as st
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from connection import run_query
+
 
 def render():
     st.title("Seller Scorecard")
@@ -28,6 +53,7 @@ def render():
 
     df.columns = [c.lower() for c in df.columns]
 
+    # ── Filters ───────────────────────────────────────────────────────
     st.sidebar.subheader("Filters")
     states = ["All"] + sorted(df["state"].dropna().unique().tolist())
     selected_state = st.sidebar.selectbox("State", states)
@@ -37,14 +63,17 @@ def render():
         df = df[df["state"] == selected_state]
     df = df[df["total_orders"] >= min_orders]
 
+    # ── Headline numbers ──────────────────────────────────────────────
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Sellers", len(df))
     col2.metric("Avg Review Score", f"{df['avg_review_score'].mean():.2f}")
     col3.metric("Avg Delivery Delta", f"{df['avg_delivery_delta_days'].mean():.1f} days")
     col4.metric("Total Revenue", f"R$ {df['total_revenue'].sum():,.0f}")
 
+    # ── Review score vs delivery speed ────────────────────────────────
+    # The dashed line at x=0 splits early deliveries (left) from late ones (right)
     st.subheader("Review Score vs Delivery Speed")
-    st.caption("Bubble size = order volume. Green = on time or early. Red = late.")
+    st.caption("Bubble size = order volume. Negative delta means the package arrived early.")
     fig = px.scatter(
         df,
         x="avg_delivery_delta_days",
@@ -65,6 +94,7 @@ def render():
     fig.update_layout(height=500)
     st.plotly_chart(fig, use_container_width=True)
 
+    # ── Top sellers by revenue ────────────────────────────────────────
     st.subheader("Top 20 Sellers by Revenue")
     fig2 = px.bar(
         df.head(20),

@@ -1,17 +1,47 @@
+"""
+Pre-load Validation
+===================
+
+Runs 30 checks across the 9 Olist tables in S3 before anything touches
+Snowflake. If something looks wrong here, we'd rather fail fast than
+load bad data and have dbt tests catch it later.
+
+Four check types per table (not every table has all four):
+- row_count:      at least N rows (catches a truncated download)
+- not_null:       key columns have no nulls
+- non_negative:   price/payment columns are >= 0
+- accepted_values: order_status is one of the known values (unexpected
+                   values become warnings, not failures, since Olist
+                   could add a new status)
+
+Reads directly from S3 so it can run before Snowflake is touched.
+
+Run with:
+    python ingestion/validate.py
+
+Dependencies:
+- boto3
+- pandas
+- python-dotenv
+- loguru
+"""
+
+import os
+from datetime import datetime, timezone
+from io import StringIO
+
 import boto3
 import pandas as pd
-from io import StringIO
-from pathlib import Path
-from datetime import datetime, timezone
-from loguru import logger
 from dotenv import load_dotenv
-import os
+from loguru import logger
 
 load_dotenv()
 
+# ── Config ────────────────────────────────────────────────────────────
 BUCKET = os.getenv("S3_BUCKET", "retaillens-raw")
 REGION = os.getenv("AWS_REGION", "us-east-1")
 
+# Rules for each table — min_rows catches a bad download, the rest catch data quality issues
 VALIDATION_RULES = {
     "olist_orders": {
         "s3_prefix": "olist_orders",
@@ -21,7 +51,7 @@ VALIDATION_RULES = {
         "accepted_values": {
             "order_status": [
                 "delivered", "shipped", "canceled", "unavailable",
-                "invoiced", "processing", "created", "approved"
+                "invoiced", "processing", "created", "approved",
             ]
         },
     },
@@ -78,39 +108,49 @@ VALIDATION_RULES = {
 }
 
 
-def read_csv_from_s3(s3_client, bucket: str, key: str) -> pd.DataFrame:
-    response = s3_client.get_object(Bucket=bucket, Key=key)
-    content = response["Body"].read().decode("utf-8")
-    return pd.read_csv(StringIO(content))
-
-
+# ── S3 helpers ────────────────────────────────────────────────────────
 def get_latest_s3_key(s3_client, bucket: str, prefix: str, filename: str) -> str:
+    """Find the most recent partition for a table. Sorting by key works because dates are ISO format."""
     paginator = s3_client.get_paginator("list_objects_v2")
     pages = paginator.paginate(Bucket=bucket, Prefix=prefix)
-    keys = []
-    for page in pages:
-        for obj in page.get("Contents", []):
-            if obj["Key"].endswith(filename):
-                keys.append(obj["Key"])
+    keys = [
+        obj["Key"]
+        for page in pages
+        for obj in page.get("Contents", [])
+        if obj["Key"].endswith(filename)
+    ]
     if not keys:
         raise FileNotFoundError(f"No files found in s3://{bucket}/{prefix}/")
     return sorted(keys)[-1]
 
 
+def read_csv_from_s3(s3_client, bucket: str, key: str) -> pd.DataFrame:
+    """Download a CSV from S3 and return it as a DataFrame."""
+    response = s3_client.get_object(Bucket=bucket, Key=key)
+    content = response["Body"].read().decode("utf-8")
+    return pd.read_csv(StringIO(content))
+
+
+# ── Validation ────────────────────────────────────────────────────────
 def validate_table(s3_client, table_name: str, rules: dict) -> dict:
+    """
+    Run all checks for one table and return a result dict.
+
+    Returns:
+    --------
+    dict with keys: table, passed (list), failed (list), warnings (list)
+    """
     result = {"table": table_name, "passed": [], "failed": [], "warnings": []}
 
     try:
-        key = get_latest_s3_key(
-            s3_client, BUCKET, rules["s3_prefix"], rules["filename"]
-        )
+        key = get_latest_s3_key(s3_client, BUCKET, rules["s3_prefix"], rules["filename"])
         logger.info(f"Validating {table_name} from s3://{BUCKET}/{key}")
         df = read_csv_from_s3(s3_client, BUCKET, key)
     except Exception as e:
         result["failed"].append(f"Could not read file: {e}")
         return result
 
-    # Row count check
+    # Row count — catches a truncated or empty download
     actual_rows = len(df)
     min_rows = rules.get("min_rows", 0)
     if actual_rows >= min_rows:
@@ -118,7 +158,7 @@ def validate_table(s3_client, table_name: str, rules: dict) -> dict:
     else:
         result["failed"].append(f"row_count: {actual_rows} < {min_rows}")
 
-    # Not null checks
+    # Not null — key columns shouldn't have any missing values
     for col in rules.get("not_null", []):
         if col not in df.columns:
             result["failed"].append(f"not_null: column '{col}' missing")
@@ -129,7 +169,7 @@ def validate_table(s3_client, table_name: str, rules: dict) -> dict:
         else:
             result["failed"].append(f"not_null: {col} has {null_count} nulls")
 
-    # Non-negative checks
+    # Non-negative — prices and payment amounts should never be negative
     for col in rules.get("non_negative", []):
         if col not in df.columns:
             result["failed"].append(f"non_negative: column '{col}' missing")
@@ -140,7 +180,8 @@ def validate_table(s3_client, table_name: str, rules: dict) -> dict:
         else:
             result["failed"].append(f"non_negative: {col} has {negative_count} negative values")
 
-    # Accepted values checks
+    # Accepted values — unexpected statuses are warnings, not failures,
+    # since Olist could add a new order status we haven't seen before
     for col, accepted in rules.get("accepted_values", {}).items():
         if col not in df.columns:
             result["failed"].append(f"accepted_values: column '{col}' missing")
@@ -154,7 +195,9 @@ def validate_table(s3_client, table_name: str, rules: dict) -> dict:
     return result
 
 
+# ── Main ──────────────────────────────────────────────────────────────
 def validate(ingestion_date: str = None) -> dict:
+    """Validate all 9 tables and raise if any hard checks fail."""
     if ingestion_date is None:
         ingestion_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -179,7 +222,7 @@ def validate(ingestion_date: str = None) -> dict:
         for msg in result["warnings"]:
             logger.warning(f"  WARNING: {msg}")
 
-    logger.info(f"Validation complete — {total_passed} checks passed, {total_failed} checks failed")
+    logger.info(f"Validation complete — {total_passed} checks passed, {total_failed} failed")
 
     if total_failed > 0:
         raise RuntimeError(f"Validation failed with {total_failed} error(s)")

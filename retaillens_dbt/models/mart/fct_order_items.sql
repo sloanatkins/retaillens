@@ -1,3 +1,14 @@
+-- fct_order_items.sql
+--
+-- Fact table at the order-item grain — one row per item per order.
+-- Joins to all four dimensions so the dashboard can slice by customer,
+-- product, seller, or date without needing to touch the raw tables.
+--
+-- The surrogate key is md5 of order_id + order_item_id because an order
+-- can have multiple items and order_item_id alone isn't globally unique.
+-- dim_sellers only includes sellers with ≥ 10 orders, so s.seller_sk will
+-- be null for low-volume sellers — that's expected.
+
 with order_items as (
     select * from {{ ref('stg_order_items') }}
 ),
@@ -35,7 +46,7 @@ final as (
         oi.freight_value,
         o.avg_review_score       as review_score,
         o.order_status,
-        o.delivery_delta_days,
+        o.delivery_delta_days,   -- positive = late, negative = early, null = not delivered
         o.total_payment_value,
         o.order_purchase_ts
     from order_items oi

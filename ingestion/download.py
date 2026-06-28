@@ -1,12 +1,38 @@
-import os
+"""
+Kaggle Download
+===============
+
+Downloads the Olist Brazilian E-Commerce dataset from Kaggle and checks
+whether anything actually changed since the last run.
+
+For each run there are two outcomes:
+- files changed (or first run)  -> pipeline proceeds normally
+- files unchanged               -> checksums match, safe to skip upstream
+
+Integrity check uses MD5 because we just want to detect changes, not
+cryptographic security. The checksum file lives next to the raw data so
+it's easy to delete and force a fresh run.
+
+Run with:
+    python ingestion/download.py
+
+Dependencies:
+- loguru
+- python-dotenv
+- kaggle CLI (must be configured with ~/.kaggle/kaggle.json)
+"""
+
 import hashlib
+import os
+from datetime import datetime, timezone
 from pathlib import Path
-from datetime import datetime
-from loguru import logger
+
 from dotenv import load_dotenv
+from loguru import logger
 
 load_dotenv()
 
+# ── Config ────────────────────────────────────────────────────────────
 DATASET = "olistbr/brazilian-ecommerce"
 RAW_DATA_PATH = Path(__file__).parent.parent / "data" / "raw"
 CHECKSUM_PATH = Path(__file__).parent.parent / "data" / ".checksums"
@@ -24,8 +50,9 @@ EXPECTED_FILES = [
 ]
 
 
+# ── Helpers ───────────────────────────────────────────────────────────
 def compute_checksum(filepath: Path) -> str:
-    """Compute MD5 checksum for a file."""
+    """MD5 the file in chunks so large CSVs don't blow up memory."""
     md5 = hashlib.md5()
     with open(filepath, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
@@ -34,7 +61,7 @@ def compute_checksum(filepath: Path) -> str:
 
 
 def load_checksums() -> dict:
-    """Load previously stored checksums."""
+    """Read the checksum file from the last run. Returns empty dict if it doesn't exist yet."""
     checksums = {}
     if CHECKSUM_PATH.exists():
         with open(CHECKSUM_PATH, "r") as f:
@@ -46,7 +73,7 @@ def load_checksums() -> dict:
 
 
 def save_checksums(checksums: dict):
-    """Save current checksums to disk."""
+    """Write checksums to disk so the next run can compare."""
     CHECKSUM_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(CHECKSUM_PATH, "w") as f:
         for filename, checksum in checksums.items():
@@ -54,11 +81,8 @@ def save_checksums(checksums: dict):
 
 
 def verify_files() -> bool:
-    """Confirm all expected CSVs are present after download."""
-    missing = []
-    for filename in EXPECTED_FILES:
-        if not (RAW_DATA_PATH / filename).exists():
-            missing.append(filename)
+    """Make sure all 9 expected CSVs landed after the download."""
+    missing = [f for f in EXPECTED_FILES if not (RAW_DATA_PATH / f).exists()]
     if missing:
         logger.error(f"Missing files after download: {missing}")
         return False
@@ -66,24 +90,22 @@ def verify_files() -> bool:
     return True
 
 
-def files_changed(current_checksums: dict, previous_checksums: dict) -> bool:
-    """Return True if any file has changed since last run."""
-    for filename, checksum in current_checksums.items():
-        if previous_checksums.get(filename) != checksum:
-            return True
-    return False
+def files_changed(current: dict, previous: dict) -> bool:
+    """Return True if any file has a different checksum than last time."""
+    return any(previous.get(f) != cs for f, cs in current.items())
 
 
+# ── Main ──────────────────────────────────────────────────────────────
 def download():
-    """Download Olist dataset from Kaggle and verify integrity."""
+    """Download the dataset and return a summary of what changed."""
     logger.info(f"Starting download — dataset: {DATASET}")
     logger.info(f"Target path: {RAW_DATA_PATH}")
 
     RAW_DATA_PATH.mkdir(parents=True, exist_ok=True)
 
-    # Download via kaggle CLI
+    # Path has a space ("Project 3") so it needs to be quoted in the shell call
     exit_code = os.system(
-        f"kaggle datasets download -d {DATASET} --unzip -p \"{RAW_DATA_PATH}\" -q"
+        f'kaggle datasets download -d {DATASET} --unzip -p "{RAW_DATA_PATH}" -q'
     )
     if exit_code != 0:
         logger.error(f"Kaggle download failed with exit code {exit_code}")
@@ -91,29 +113,26 @@ def download():
 
     logger.info("Download complete")
 
-    # Verify all files are present
     if not verify_files():
         raise RuntimeError("File verification failed — not all expected CSVs present")
 
-    # Checksum comparison
-    previous_checksums = load_checksums()
-    current_checksums = {
-        f: compute_checksum(RAW_DATA_PATH / f) for f in EXPECTED_FILES
-    }
+    # Compare against last run to decide if anything actually changed
+    previous = load_checksums()
+    current = {f: compute_checksum(RAW_DATA_PATH / f) for f in EXPECTED_FILES}
 
-    if previous_checksums and not files_changed(current_checksums, previous_checksums):
-        logger.info("Checksums match previous run — source data unchanged, skipping upstream")
+    if previous and not files_changed(current, previous):
+        logger.info("Checksums match previous run — source data unchanged")
     else:
         logger.info("New or changed files detected — pipeline will proceed")
 
-    save_checksums(current_checksums)
+    save_checksums(current)
     logger.info(f"Checksums saved to {CHECKSUM_PATH}")
 
     return {
         "status": "success",
         "files": EXPECTED_FILES,
-        "timestamp": datetime.utcnow().isoformat(),
-        "changed": files_changed(current_checksums, previous_checksums),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "changed": files_changed(current, previous),
     }
 
 

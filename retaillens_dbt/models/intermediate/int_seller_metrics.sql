@@ -1,3 +1,15 @@
+-- int_seller_metrics.sql
+--
+-- Aggregates order history per seller to get performance metrics.
+-- This feeds DIM_SELLERS in the mart.
+--
+-- delivery_delta_days comes from int_orders_enriched (positive = late,
+-- negative = early), so avg_delivery_delta_days tells you whether a seller
+-- tends to ship fast or slow relative to the estimated date.
+--
+-- DIV0 handles sellers with zero orders without throwing a divide-by-zero —
+-- those will just have a null cancellation_rate.
+
 with order_items as (
     select * from {{ ref('stg_order_items') }}
 ),
@@ -13,16 +25,15 @@ sellers as (
 seller_agg as (
     select
         oi.seller_id,
-        count(distinct oi.order_id)         as total_orders,
-        count(*)                            as total_items_sold,
-        sum(oi.price)                       as total_revenue,
-        avg(oi.price)                       as avg_item_price,
-        avg(o.avg_review_score)             as avg_review_score,
-        avg(o.delivery_delta_days)          as avg_delivery_delta_days,
-        sum(case when o.order_status = 'canceled'
-            then 1 else 0 end)              as canceled_orders,
-        min(o.order_purchase_ts)            as first_order_ts,
-        max(o.order_purchase_ts)            as last_order_ts
+        count(distinct oi.order_id)                             as total_orders,
+        count(*)                                                as total_items_sold,
+        sum(oi.price)                                           as total_revenue,
+        avg(oi.price)                                           as avg_item_price,
+        avg(o.avg_review_score)                                 as avg_review_score,
+        avg(o.delivery_delta_days)                              as avg_delivery_delta_days,
+        sum(case when o.order_status = 'canceled' then 1 else 0 end) as canceled_orders,
+        min(o.order_purchase_ts)                                as first_order_ts,
+        max(o.order_purchase_ts)                                as last_order_ts
     from order_items oi
     left join orders o on oi.order_id = o.order_id
     group by oi.seller_id
