@@ -52,15 +52,15 @@ EXPECTED_FILES = [
 
 # Maps the raw filename to a clean table name used in the S3 path
 TABLE_NAME_MAP = {
-    "olist_customers_dataset.csv":              "olist_customers",
-    "olist_geolocation_dataset.csv":            "olist_geolocation",
-    "olist_order_items_dataset.csv":            "olist_order_items",
-    "olist_order_payments_dataset.csv":         "olist_order_payments",
-    "olist_order_reviews_dataset.csv":          "olist_order_reviews",
-    "olist_orders_dataset.csv":                 "olist_orders",
-    "olist_products_dataset.csv":               "olist_products",
-    "olist_sellers_dataset.csv":                "olist_sellers",
-    "product_category_name_translation.csv":    "product_category_translation",
+    "olist_customers_dataset.csv": "olist_customers",
+    "olist_geolocation_dataset.csv": "olist_geolocation",
+    "olist_order_items_dataset.csv": "olist_order_items",
+    "olist_order_payments_dataset.csv": "olist_order_payments",
+    "olist_order_reviews_dataset.csv": "olist_order_reviews",
+    "olist_orders_dataset.csv": "olist_orders",
+    "olist_products_dataset.csv": "olist_products",
+    "olist_sellers_dataset.csv": "olist_sellers",
+    "product_category_name_translation.csv": "product_category_translation",
 }
 
 

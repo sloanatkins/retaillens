@@ -45,14 +45,14 @@ REGION = os.getenv("AWS_REGION", "us-east-1")
 
 # All 9 tables — maps the Snowflake table name to its S3 prefix and filename
 TABLES = [
-    {"table": "OLIST_ORDERS",               "s3_prefix": "olist_orders",               "filename": "olist_orders_dataset.csv"},
-    {"table": "OLIST_ORDER_ITEMS",          "s3_prefix": "olist_order_items",          "filename": "olist_order_items_dataset.csv"},
-    {"table": "OLIST_CUSTOMERS",            "s3_prefix": "olist_customers",            "filename": "olist_customers_dataset.csv"},
-    {"table": "OLIST_PRODUCTS",             "s3_prefix": "olist_products",             "filename": "olist_products_dataset.csv"},
-    {"table": "OLIST_SELLERS",              "s3_prefix": "olist_sellers",              "filename": "olist_sellers_dataset.csv"},
-    {"table": "OLIST_ORDER_PAYMENTS",       "s3_prefix": "olist_order_payments",       "filename": "olist_order_payments_dataset.csv"},
-    {"table": "OLIST_ORDER_REVIEWS",        "s3_prefix": "olist_order_reviews",        "filename": "olist_order_reviews_dataset.csv"},
-    {"table": "OLIST_GEOLOCATION",          "s3_prefix": "olist_geolocation",          "filename": "olist_geolocation_dataset.csv"},
+    {"table": "OLIST_ORDERS", "s3_prefix": "olist_orders", "filename": "olist_orders_dataset.csv"},
+    {"table": "OLIST_ORDER_ITEMS", "s3_prefix": "olist_order_items", "filename": "olist_order_items_dataset.csv"},
+    {"table": "OLIST_CUSTOMERS", "s3_prefix": "olist_customers", "filename": "olist_customers_dataset.csv"},
+    {"table": "OLIST_PRODUCTS", "s3_prefix": "olist_products", "filename": "olist_products_dataset.csv"},
+    {"table": "OLIST_SELLERS", "s3_prefix": "olist_sellers", "filename": "olist_sellers_dataset.csv"},
+    {"table": "OLIST_ORDER_PAYMENTS", "s3_prefix": "olist_order_payments", "filename": "olist_order_payments_dataset.csv"},
+    {"table": "OLIST_ORDER_REVIEWS", "s3_prefix": "olist_order_reviews", "filename": "olist_order_reviews_dataset.csv"},
+    {"table": "OLIST_GEOLOCATION", "s3_prefix": "olist_geolocation", "filename": "olist_geolocation_dataset.csv"},
     {"table": "PRODUCT_CATEGORY_TRANSLATION", "s3_prefix": "product_category_translation", "filename": "product_category_name_translation.csv"},
 ]
 
