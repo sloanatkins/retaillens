@@ -84,6 +84,24 @@ Three interactive views built with Streamlit + Plotly, querying dbt mart tables 
 
 ---
 
+## Tableau Dashboard
+
+A fourth view built in Tableau, focused on delivery performance and customer reviews. 
+
+**Live dashboard:** [RetailLens Olist Delivery Dashboard on Tableau Public](https://public.tableau.com/app/profile/sloan.atkins/viz/RetailLensOlistDeliveryDashboard/RetailLensOlistDeliveryDashboard)
+
+**What it shows:** four KPI tiles (revenue, orders, average review score, share of items delivered late), a state map of late delivery rate, monthly revenue, top 10 categories by revenue, and average review score by delivery timing. Filters cover delivery timing, order date, and state. Clicking a state on the map filters every other chart.
+
+**Key insights**
+- Late deliveries concentrate in the northeast. Alagoas has the highest late rate at 20.9% (442 items) and Maranhao follows at 18.2% (815 items). The lowest state is 3.1%.
+- Review scores fall as deliveries get later. Items delivered a week or more early average 4.23, items 1 to 7 days late average 2.68, and items 8 or more days late average 1.70.
+- Orders that were never delivered average 1.76, about the same as the 8+ days late group.
+- Revenue totals R$13.5M across 98K orders, peaking in late 2017 and holding near R$1M a month after that.
+
+**How it was built:** Tableau Public Edition cannot connect to Snowflake directly, so the five mart tables (fct_order_items and the four dimensions) were exported from the RAW_MART schema as CSVs. They are joined in Tableau on the same surrogate keys as the star schema. Two calculated fields do most of the work: Late Delivery % and Delivery Bucket. The data is a snapshot of the mart tables, not a live connection.
+
+---
+
 ## Pipeline
 
 The Airflow DAG runs daily at 06:00 UTC with 8 sequential tasks and retries=2 on each:
