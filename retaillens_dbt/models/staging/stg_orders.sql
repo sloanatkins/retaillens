@@ -1,3 +1,9 @@
+-- stg_orders.sql
+--
+-- Renames and casts the raw orders table. All five timestamp columns come in
+-- as VARCHAR and get cast here — nulls are fine since not every order reaches
+-- every stage (e.g. order_delivered_customer_ts is null until the order ships).
+
 with source as (
     select * from {{ source('retaillens_raw', 'olist_orders') }}
 ),
@@ -7,9 +13,9 @@ renamed as (
         order_id,
         customer_id,
         order_status,
-        try_to_timestamp_ntz(order_purchase_timestamp) as order_purchase_ts,
-        try_to_timestamp_ntz(order_approved_at)         as order_approved_ts,
-        try_to_timestamp_ntz(order_delivered_carrier_date) as order_delivered_carrier_ts,
+        try_to_timestamp_ntz(order_purchase_timestamp)      as order_purchase_ts,
+        try_to_timestamp_ntz(order_approved_at)             as order_approved_ts,
+        try_to_timestamp_ntz(order_delivered_carrier_date)  as order_delivered_carrier_ts,
         try_to_timestamp_ntz(order_delivered_customer_date) as order_delivered_customer_ts,
         try_to_timestamp_ntz(order_estimated_delivery_date) as order_estimated_delivery_ts
     from source

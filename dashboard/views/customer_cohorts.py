@@ -1,10 +1,36 @@
-import streamlit as st
-import plotly.express as px
-import pandas as pd
-import sys
+"""
+Customer Cohort Analysis View
+=============================
+
+Groups customers by the month they placed their first order (cohort month)
+and tracks how that group performed over time.
+
+Three charts:
+- Bar: cohort size by acquisition month, colored by repeat rate
+- Line: repeat purchase rate trend across cohorts
+- Bar: average lifetime value per cohort, colored by avg orders
+
+A customer counts as a repeat buyer if TOTAL_ORDERS > 1. The cohort_month
+comes from int_customer_lifetime_value and is already truncated to month,
+but DATE_TRUNC here makes the grouping explicit.
+
+Dependencies:
+- streamlit
+- plotly
+- pandas
+- connection.run_query (../connection.py)
+"""
+
 import os
+import sys
+
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from connection import run_query
+
 
 def render():
     st.title("Customer Cohort Analysis")
@@ -13,14 +39,16 @@ def render():
     with st.spinner("Loading cohort data..."):
         df = run_query("""
             SELECT
-                DATE_TRUNC('month', COHORT_MONTH) as cohort_month,
-                COUNT(DISTINCT CUSTOMER_ID) as cohort_size,
-                AVG(TOTAL_ORDERS) as avg_orders,
-                AVG(LIFETIME_VALUE) as avg_ltv,
-                AVG(AVG_REVIEW_SCORE) as avg_review_score,
-                SUM(CASE WHEN TOTAL_ORDERS > 1 THEN 1 ELSE 0 END) as repeat_customers,
-                DIV0(SUM(CASE WHEN TOTAL_ORDERS > 1 THEN 1 ELSE 0 END),
-                     COUNT(DISTINCT CUSTOMER_ID)) as repeat_rate
+                DATE_TRUNC('month', COHORT_MONTH) AS cohort_month,
+                COUNT(DISTINCT CUSTOMER_ID) AS cohort_size,
+                AVG(TOTAL_ORDERS) AS avg_orders,
+                AVG(LIFETIME_VALUE) AS avg_ltv,
+                AVG(AVG_REVIEW_SCORE) AS avg_review_score,
+                SUM(CASE WHEN TOTAL_ORDERS > 1 THEN 1 ELSE 0 END) AS repeat_customers,
+                DIV0(
+                    SUM(CASE WHEN TOTAL_ORDERS > 1 THEN 1 ELSE 0 END),
+                    COUNT(DISTINCT CUSTOMER_ID)
+                ) AS repeat_rate
             FROM RETAILLENS_DB.RAW_MART.DIM_CUSTOMERS
             WHERE COHORT_MONTH IS NOT NULL
             GROUP BY DATE_TRUNC('month', COHORT_MONTH)
@@ -31,11 +59,13 @@ def render():
     df["cohort_month"] = pd.to_datetime(df["cohort_month"])
     df["cohort_label"] = df["cohort_month"].dt.strftime("%Y-%m")
 
+    # ── Headline numbers ──────────────────────────────────────────────
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Cohorts", len(df))
     col2.metric("Avg Repeat Rate", f"{df['repeat_rate'].mean():.1%}")
     col3.metric("Avg LTV", f"R$ {df['avg_ltv'].mean():,.2f}")
 
+    # ── Cohort size ───────────────────────────────────────────────────
     st.subheader("Cohort Size Over Time")
     fig1 = px.bar(
         df,
@@ -43,12 +73,17 @@ def render():
         y="cohort_size",
         color="repeat_rate",
         color_continuous_scale="Blues",
-        labels={"cohort_label": "Cohort Month", "cohort_size": "New Customers", "repeat_rate": "Repeat Rate"},
+        labels={
+            "cohort_label": "Cohort Month",
+            "cohort_size": "New Customers",
+            "repeat_rate": "Repeat Rate",
+        },
         title="New Customers by Acquisition Month (color = repeat rate)",
     )
     fig1.update_layout(height=400, xaxis_tickangle=45)
     st.plotly_chart(fig1, use_container_width=True)
 
+    # ── Repeat rate trend ─────────────────────────────────────────────
     st.subheader("Repeat Purchase Rate by Cohort")
     fig2 = px.line(
         df,
@@ -62,6 +97,8 @@ def render():
     fig2.update_layout(height=400, xaxis_tickangle=45)
     st.plotly_chart(fig2, use_container_width=True)
 
+    # ── Lifetime value ────────────────────────────────────────────────
+    # Color by avg_orders so you can see if high-LTV cohorts just ordered more
     st.subheader("Lifetime Value by Cohort")
     fig3 = px.bar(
         df,
@@ -69,7 +106,11 @@ def render():
         y="avg_ltv",
         color="avg_orders",
         color_continuous_scale="Greens",
-        labels={"cohort_label": "Cohort Month", "avg_ltv": "Avg Lifetime Value (R$)", "avg_orders": "Avg Orders"},
+        labels={
+            "cohort_label": "Cohort Month",
+            "avg_ltv": "Avg Lifetime Value (R$)",
+            "avg_orders": "Avg Orders",
+        },
         title="Average Lifetime Value by Cohort (color = avg orders)",
     )
     fig3.update_layout(height=400, xaxis_tickangle=45)
